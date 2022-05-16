@@ -11,6 +11,7 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,9 @@ import org.springframework.stereotype.Service;
 public class ExcelService {
 
 	private static final String EXCEL_FILE = "Hackathon_Data_MinorityWomenOwned_2022_v1.xlsx";
+
+	@Autowired
+	private WebscarpperService webscarpperService;
 
 	public void read() throws IOException {
 		File resource = new ClassPathResource(EXCEL_FILE).getFile();
@@ -34,6 +38,7 @@ public class ExcelService {
 		XSSFSheet outputSheet = outputWorkbook.createSheet(mySheet.getSheetName());
 		Iterator<Row> rowIterator = mySheet.iterator();
 		int outputRows = 0;
+		int leadershipCellIndexNumber = 0;
 		while (rowIterator.hasNext()) {
 			Row outputRow = outputSheet.createRow(outputRows++);
 			Row row = rowIterator.next();
@@ -61,7 +66,29 @@ public class ExcelService {
 				}
 
 			}
-			break;
+
+			if (row.getCell(1) == null || row.getCell(1).getStringCellValue().trim().length() <= 2) {
+				continue;
+			}
+
+			if (outputRows == 1) {
+				leadershipCellIndexNumber = outputCells;
+			}
+
+			Cell outputCell = outputRow.createCell(leadershipCellIndexNumber);
+			if (row.getCell(leadershipCellIndexNumber - 1) != null) {
+				CellStyle outputCellStyle = outputWorkbook.createCellStyle();
+				outputCellStyle.cloneStyleFrom(row.getCell(leadershipCellIndexNumber - 1).getCellStyle());
+				outputCell.setCellStyle(outputCellStyle);
+			}
+
+			if (outputRows > 1) {
+				final String COMPANY_NAME = row.getCell(1).getStringCellValue();
+				outputCell.setCellValue(webscarpperService.webscrap(COMPANY_NAME));
+			} else {
+				outputCell.setCellValue("Company Leadership Link");
+			}
+
 		}
 		write(outputWorkbook);
 	}
