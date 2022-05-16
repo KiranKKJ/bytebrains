@@ -20,7 +20,7 @@ public class Application {
 		WebscarpperService webscapperService = (WebscarpperService) context.getBean("webscarpperService");
 
 		try {
-			excelService.read();
+			//excelService.read();
 			webscapperService.webscrap();
 		} finally {
 			context.close();
